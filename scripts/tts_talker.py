@@ -5,6 +5,7 @@ import os
 import sys
 import rospy
 import time
+import datetime as dt
 import re
 import logging
 import random
@@ -30,8 +31,11 @@ from ttsserver.client import Client
 from ttsserver.espp.emotivespeech import DEFAULT_PARAMS, PRESET_EMO_PARAMS
 from ros_tts.srv import *
 from ros_tts.cfg import TTSConfig
+from chatbot.db import get_mongo_client
 
 logger = logging.getLogger('hr.tts.tts_talker')
+
+ROBOT_NAME = os.environ.get('NAME')
 
 class TTSTalker:
     def __init__(self):
@@ -41,6 +45,12 @@ class TTSTalker:
         self.emotion_params = {}
         self.tts_params = {}
         self.voices = rospy.get_param('voices', {})
+
+        try:
+            self.mongoclient = get_mongo_client()
+        except Exception as ex:
+            self.mongoclient = None
+        self.run_id = rospy.get_param('/run_id', '')
 
         self.service = rospy.Service('tts_length', TTSLength, self.tts_length)
         tts_topic = rospy.get_param('tts_topic', 'chatbot_responses')
@@ -89,6 +99,23 @@ class TTSTalker:
                     self._say(text.encode('utf-8'), lang)
         else:
             self._say(text, lang)
+
+        if self.mongoclient is not None and self.mongoclient.client is not None:
+            try:
+                speech = {
+                    'Datetime': dt.datetime.now(),
+                    'Text': text,
+                    'Language': lang,
+                    'RunID': self.run_id,
+                    'RobotName': ROBOT_NAME,
+                }
+                mongocollection = self.mongoclient.client['tts']['speech']
+                result = mongocollection.insert_one(speech)
+                logger.info("Added record to mongodb")
+            except Exception as ex:
+                self.mongoclient.client = None
+                logger.error(traceback.format_exc())
+                logger.warn("Deactivate mongodb")
 
         logger.info("Finished tts")
 

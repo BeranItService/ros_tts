@@ -35,7 +35,7 @@ from chatbot.db import get_mongo_client
 
 logger = logging.getLogger('hr.tts.tts_talker')
 
-ROBOT_NAME = os.environ.get('NAME')
+ROBOT_NAME = os.environ.get('NAME', 'default')
 
 class TTSTalker:
     def __init__(self):
@@ -107,9 +107,8 @@ class TTSTalker:
                     'Text': text,
                     'Language': lang,
                     'RunID': self.run_id,
-                    'RobotName': ROBOT_NAME,
                 }
-                mongocollection = self.mongoclient.client['tts']['speech']
+                mongocollection = self.mongoclient.client[ROBOT_NAME]['tts']['speech']
                 result = mongocollection.insert_one(speech)
                 logger.info("Added record to mongodb")
             except Exception as ex:

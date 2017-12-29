@@ -100,7 +100,7 @@ class TTSTalker:
         else:
             self._say(text, lang)
 
-        if self.mongoclient is not None and self.mongoclient.client is not None:
+        if self.mongoclient is not None:
             try:
                 speech = {
                     'Datetime': dt.datetime.now(),
@@ -108,11 +108,11 @@ class TTSTalker:
                     'Language': lang,
                     'RunID': self.run_id,
                 }
-                mongocollection = self.mongoclient.client[ROBOT_NAME]['tts']['speech']
+                mongocollection = self.mongoclient[ROBOT_NAME]['tts']['speech']
                 result = mongocollection.insert_one(speech)
                 logger.info("Added record to mongodb")
             except Exception as ex:
-                self.mongoclient.client = None
+                self.mongoclient = None
                 logger.error(traceback.format_exc())
                 logger.warn("Deactivate mongodb")
 

@@ -120,6 +120,9 @@ class TTSTalker:
         logger.info("Finished tts")
 
     def _say(self, text, lang):
+        if lang == 'pt-PT':
+            text = re.sub(r'\bSophia\b', 'Sofia', text) # for better pronunciation
+
         logger.info('Say "{}" in {}'.format(text, lang))
         try:
             vendor, voice = self.voices[lang].split(':')

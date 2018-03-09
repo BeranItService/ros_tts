@@ -131,7 +131,7 @@ class TTSTalker:
             params = {}
             params.update(self.emotion_params)
             params.update(self.tts_params)
-            text = text.strip().strip(".?!")
+            text = text.strip()
             response = self.client.tts(text, vendor=vendor, voice=voice, **params)
             self.executor.execute(response)
             if self.enable_peer_chatbot:

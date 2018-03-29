@@ -104,7 +104,7 @@ class TTSTalker:
         if self.mongodb.client is not None:
             try:
                 speech = {
-                    'Datetime': dt.datetime.now(),
+                    'Datetime': dt.datetime.utcnow(),
                     'Text': text,
                     'Language': lang,
                     'RunID': self.run_id,

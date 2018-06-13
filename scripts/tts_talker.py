@@ -249,6 +249,7 @@ class TTSExecutor(object):
             try:
                 return f(self, *args, **kwargs)
             finally:
+                self._stopLipSync()
                 self._locker.release()
         return wrap
 
@@ -325,8 +326,10 @@ class TTSExecutor(object):
                 self.sendVisime(node)
 
         elapsed = time.time() - start
-        supposed = nodes[-1]['end']
-        logger.info("Elapsed {}, nodes duration {}".format(elapsed, supposed))
+        if not nodes:
+            logger.warn("Empty TTS nodes")
+        else:
+            logger.info("Elapsed {}, nodes duration {}".format(elapsed, nodes[-1]['end']))
 
         if self.interrupt.is_set():
             self.interrupt.clear()
@@ -334,7 +337,6 @@ class TTSExecutor(object):
             logger.info("Interrupt flag is cleared")
 
         self.sendVisime({'name': 'Sil'})
-        self._stopLipSync()
         os.remove(wavfile)
 
     def sendVisime(self, visime):

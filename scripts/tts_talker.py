@@ -161,11 +161,12 @@ class TTSTalker:
             try:
                 tts_params = json.loads(config.tts_params_json)
             except Exception as ex:
+                logger.error(ex)
                 logger.error("Can't parse json {}".format(config.tts_params_json))
                 self.tts_params = {}
             else:
                 self.tts_params.update(tts_params)
-                logger.info("TTS params {}".format(self.tts_params))
+                logger.warn("TTS params {}".format(self.tts_params))
         else:
             self.tts_params = {}
             config.tts_params_json = ''

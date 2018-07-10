@@ -5,10 +5,8 @@ import os
 import sys
 import rospy
 import time
-import datetime as dt
 import re
 import logging
-import random
 import threading
 import subprocess
 import urllib
@@ -20,22 +18,18 @@ import traceback
 
 from basic_head_api.msg import MakeFaceExpr
 from blender_api_msgs.msg import Viseme, SetGesture, EmotionState
+from dynamic_reconfigure.server import Server
 from hr_msgs.msg import TTS
+from ros_tts.cfg import TTSConfig
+from ros_tts.srv import *
 from std_msgs.msg import String
 from topic_tools.srv import MuxSelect
-from dynamic_reconfigure.server import Server
-
-from ttsserver.sound_file import SoundFile
-from ttsserver.visemes import BaseVisemes
 from ttsserver.client import Client
 from ttsserver.espp.emotivespeech import DEFAULT_PARAMS, PRESET_EMO_PARAMS
-from ros_tts.srv import *
-from ros_tts.cfg import TTSConfig
-from chatbot.db import get_mongodb, MongoDB
+from ttsserver.sound_file import SoundFile
+from ttsserver.visemes import BaseVisemes
 
 logger = logging.getLogger('hr.tts.tts_talker')
-
-ROBOT_NAME = os.environ.get('NAME', 'default')
 
 class TTSTalker:
     def __init__(self):
@@ -45,13 +39,6 @@ class TTSTalker:
         self.emotion_params = {}
         self.tts_params = {}
         self.voices = rospy.get_param('voices', {})
-
-        try:
-            self.mongodb = get_mongodb()
-        except Exception as ex:
-            logger.error(ex)
-            self.mongodb = MongoDB()
-        self.run_id = rospy.get_param('/run_id', '')
 
         self.service = rospy.Service('tts_length', TTSLength, self.tts_length)
         tts_topic = rospy.get_param('tts_topic', 'chatbot_responses')
@@ -100,23 +87,6 @@ class TTSTalker:
                     self._say(text.encode('utf-8'), lang)
         else:
             self._say(text, lang)
-
-        if self.mongodb.client is not None:
-            try:
-                speech = {
-                    'Datetime': dt.datetime.utcnow(),
-                    'Text': text,
-                    'Language': lang,
-                    'RunID': self.run_id,
-                }
-                mongocollection = self.mongodb.client[self.mongodb.dbname][ROBOT_NAME]['tts']['speech']
-                result = mongocollection.insert_one(speech)
-                logger.info("Added record to mongodb")
-            except Exception as ex:
-                self.mongodb.client = None
-                logger.error(traceback.format_exc())
-                logger.warn("Deactivate mongodb")
-
         logger.info("Finished tts")
 
     def _say(self, text, lang):

@@ -16,10 +16,10 @@ import tempfile
 import json
 import traceback
 
-from basic_head_api.msg import MakeFaceExpr
-from blender_api_msgs.msg import Viseme, SetGesture, EmotionState
 from dynamic_reconfigure.server import Server
+from hr_msgs.msg import MakeFaceExpr
 from hr_msgs.msg import TTS
+from hr_msgs.msg import Viseme, SetGesture, EmotionState
 from ros_tts.cfg import TTSConfig
 from ros_tts.srv import *
 from std_msgs.msg import String

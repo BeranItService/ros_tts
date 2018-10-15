@@ -94,7 +94,6 @@ class TTSTalker:
             text = re.sub(r'\bSophia\b', 'Sóufia', text) # for better pronunciation
             text = re.sub(r'\bsophia\b', 'sóufia', text) # for better pronunciation
 
-        logger.info('Say "{}" in {}'.format(text, lang))
         try:
             vendor, voice = self.voices[lang].split(':')
             logger.info("Lang {}, vendor {}, voice {}".format(lang, vendor, voice))
@@ -103,6 +102,8 @@ class TTSTalker:
             params.update(self.tts_params)
             text = text.strip()
             response = self.client.tts(text, vendor=vendor, voice=voice, **params)
+            logger.info("Say %s in %s", text, lang,
+                extra={'data': {'text': text, 'lang': lang}})
             self.executor.execute(response)
             if self.enable_peer_chatbot:
                 if not isinstance(text, unicode):

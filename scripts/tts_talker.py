@@ -67,26 +67,9 @@ class TTSTalker:
         if not self.enable:
             logger.warn("TTS is not enabled")
             return
-
         text = msg.text
         lang = msg.lang
-
-        if lang == 'cmn-Hans-CN':
-            # cut the text by punctuations to avoid lengthy text
-            if isinstance(text, str):
-                try:
-                    text = text.decode('utf-8')
-                except Exception as ex:
-                    logger.error("Decode error {}, text {}".format(ex, text))
-                    return
-            pattern = ur'[。|，|！|？|、|.|,|!|?|\n]'
-            sentences = re.split(pattern, text)
-            for text in sentences:
-                text = text.strip()
-                if text:
-                    self._say(text.encode('utf-8'), lang)
-        else:
-            self._say(text, lang)
+        self._say(text, lang)
         logger.info("Finished tts")
 
     def _say(self, text, lang):

@@ -304,7 +304,11 @@ class TTSExecutor(object):
             msg.magnitude = BaseVisemes.visemes_param[visime['name']]['magnitude']
             msg.rampin = BaseVisemes.visemes_param[visime['name']]['rampin']
             msg.rampout = BaseVisemes.visemes_param[visime['name']]['rampout']
-            self.vis_topic.publish(msg)
+            try:
+                self.vis_topic.publish(msg)
+            except Exception as ex:
+                logger.exception(msg)
+                logger.exception(ex)
         if self.lipsync_enabled and not self.lipsync_blender:
             msg = MakeFaceExpr()
             msg.exprname = 'vis_'+visime['name']

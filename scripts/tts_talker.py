@@ -85,8 +85,11 @@ class TTSTalker:
             params.update(self.tts_params)
             text = text.strip()
             response = self.client.tts(text, vendor=vendor, voice=voice, **params)
-            logger.info("Say %s in %s", text, lang,
-                extra={'data': {'text': text, 'lang': lang}})
+            data = {
+                'performance_report': True,
+                'data': {'lang': lang, 'text': text}
+            }
+            logger.info("TTS: %s", text, extra=data)
             self.executor.execute(response)
             if self.enable_peer_chatbot:
                 if not isinstance(text, unicode):

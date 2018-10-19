@@ -94,7 +94,6 @@ class TTSTalker:
             text = re.sub(r'\bSophia\b', 'Sóufia', text) # for better pronunciation
             text = re.sub(r'\bsophia\b', 'sóufia', text) # for better pronunciation
 
-        logger.info('Say "{}" in {}'.format(text, lang))
         try:
             vendor, voice = self.voices[lang].split(':')
             logger.info("Lang {}, vendor {}, voice {}".format(lang, vendor, voice))
@@ -108,10 +107,7 @@ class TTSTalker:
                 if not isinstance(text, unicode):
                     text = text.decode('utf-8')
                 curl_url = self.peer_chatbot_url
-                root = u'<_root_>{}</_root_>'.format(text)
-                tree = ET.fromstring(root.encode('utf-8'))
-                notags = ET.tostring(tree, encoding='utf8', method='text')
-                notags = notags.strip()
+
                 text = urllib.quote(notags, safe='')
                 cmd = r'''curl -s --connect-timeout 1 "{}/say/{}" '''.format(curl_url, text)
                 retcode = subprocess.call(cmd, shell=True)
@@ -120,6 +116,19 @@ class TTSTalker:
         except Exception as ex:
             logger.error(ex)
             logger.error('TTS error: {}'.format(traceback.format_exc()))
+        else:
+            root = u'<_root_>{}</_root_>'.format(text)
+            tree = ET.fromstring(root.encode('utf-8'))
+            notags = ET.tostring(tree, encoding='utf8', method='text')
+            notags = notags.strip()
+            log_data = {
+                'performance_report': True,
+                'tts_lang': lang,
+                'tts_input': text,
+                'tts_text': notags
+            }
+            logger.warn('Say"{}" in {}'.format(notags, lang), extra={'data': log_data})
+
 
     def reconfig(self, config, level):
         self.enable = config.enable

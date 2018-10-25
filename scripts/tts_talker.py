@@ -107,7 +107,10 @@ class TTSTalker:
                 if not isinstance(text, unicode):
                     text = text.decode('utf-8')
                 curl_url = self.peer_chatbot_url
-
+                root = u'<_root_>{}</_root_>'.format(text)
+                tree = ET.fromstring(root.encode('utf-8'))
+                notags = ET.tostring(tree, encoding='utf8', method='text')
+                notags = notags.strip()
                 text = urllib.quote(notags, safe='')
                 cmd = r'''curl -s --connect-timeout 1 "{}/say/{}" '''.format(curl_url, text)
                 retcode = subprocess.call(cmd, shell=True)

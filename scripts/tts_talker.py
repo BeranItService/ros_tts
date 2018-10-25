@@ -104,6 +104,19 @@ class TTSTalker:
         except Exception as ex:
             logger.error(ex)
             logger.error('TTS error: {}'.format(traceback.format_exc()))
+        else:
+            root = u'<_root_>{}</_root_>'.format(text)
+            tree = ET.fromstring(root.encode('utf-8'))
+            notags = ET.tostring(tree, encoding='utf8', method='text')
+            notags = notags.strip()
+            log_data = {
+                'performance_report': True,
+                'tts_lang': lang,
+                'tts_input': text,
+                'tts_text': notags
+            }
+            logger.warn('Say"{}" in {}'.format(notags, lang), extra={'data': log_data})
+
 
     def reconfig(self, config, level):
         self.enable = config.enable

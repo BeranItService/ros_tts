@@ -105,6 +105,8 @@ class TTSTalker:
             logger.error(ex)
             logger.error('TTS error: {}'.format(traceback.format_exc()))
         else:
+            if not isinstance(text, unicode):
+                text = text.decode('utf-8')
             root = u'<_root_>{}</_root_>'.format(text)
             tree = ET.fromstring(root.encode('utf-8'))
             notags = ET.tostring(tree, encoding='utf8', method='text')

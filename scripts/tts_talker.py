@@ -39,7 +39,6 @@ class TTSTalker:
         self.emotion_params = {}
         self.tts_params = {}
         self.voices = rospy.get_param('voices', {})
-
         self.service = rospy.Service('tts_length', TTSLength, self.tts_length)
         tts_topic = rospy.get_param('tts_topic', 'chatbot_responses')
         rospy.Subscriber(tts_topic, TTS, self.say)
@@ -123,6 +122,7 @@ class TTSTalker:
         self.executor.lipsync_enabled = config.lipsync_enabled
         self.executor.lipsync_blender = config.lipsync_blender
         self.executor.enable_execute_marker(config.execute_marker)
+        self.executor.tts_delay = config.tts_delay
         self.tts_params_enabled = config.tts_params_enabled
         if self.tts_params_enabled:
             try:
@@ -170,6 +170,7 @@ class TTSExecutor(object):
         self._locker = threading.RLock()
         self.interrupt = threading.Event()
         self.sound = SoundFile()
+        self.tts_delay = 0.1
 
         self.lipsync_enabled = rospy.get_param('lipsync', True)
         self.lipsync_blender = rospy.get_param('lipsync_blender', True)
@@ -230,7 +231,7 @@ class TTSExecutor(object):
             os.remove(wavfile)
             return
 
-        threading.Timer(0.1, self.sound.play, (wavfile,)).start()
+        threading.Timer(self.tts_delay, self.sound.play, (wavfile,)).start()
 
         duration = response.get_duration()
         self._startLipSync()

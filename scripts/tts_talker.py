@@ -15,6 +15,7 @@ import xml.etree.ElementTree as ET
 import tempfile
 import json
 import traceback
+import shutil
 
 from dynamic_reconfigure.server import Server
 from hr_msgs.msg import MakeFaceExpr
@@ -232,12 +233,6 @@ class TTSExecutor(object):
             os.remove(wavfile)
             return
 
-        threading.Timer(0.1, self.sound.play, (wavfile,)).start()
-
-        duration = response.get_duration()
-        self._startLipSync()
-        self.speech_active.publish("duration:%f" % duration)
-
         phonemes = response.response['phonemes']
         markers = response.response['markers']
         words = response.response['words']
@@ -246,6 +241,25 @@ class TTSExecutor(object):
         typeorder = {'marker': 1, 'word': 2, 'viseme': 3}
         nodes = markers+words+visemes
         nodes = sorted(nodes, key=lambda x: (x['start'], typeorder[x['type']]))
+
+        audio_nodes = [node for node in nodes if node['type']=='marker' and node['name'].startswith('audio')]
+        if audio_nodes:
+            audio_node_name = audio_nodes[0]['name']
+            if ',' in audio_node_name:
+                name, filepath = audio_node_name.split(',', 1)
+                filepath = filepath.strip()
+                logger.warn('name %s, audio %s', name, filepath)
+                if os.path.isfile(filepath):
+                    shutil.copy(filepath, wavfile)
+                else:
+                    logger.fatal("Audio file %s doesn't exist", filepath)
+                    return
+
+        threading.Timer(0.1, self.sound.play, (wavfile,)).start()
+
+        duration = response.get_duration()
+        self._startLipSync()
+        self.speech_active.publish("duration:%f" % duration)
 
         # Overwrite visemes during vocal gestures
         in_gesture = False
@@ -285,6 +299,8 @@ class TTSExecutor(object):
             if node['type'] == 'marker':
                 logger.info("marker {}".format(node))
                 if node['name'].startswith('cp'):
+                    continue
+                if node['name'].startswith('audio'):
                     continue
                 self.animation_queue.put(node)
             elif node['type'] == 'word':

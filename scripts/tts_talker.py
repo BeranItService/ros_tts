@@ -122,6 +122,13 @@ class TTSTalker:
     def reconfig(self, config, level):
         self.enable = config.enable
         self.executor.lipsync_enabled = config.lipsync_enabled
+        # Stops lipsync while in speech
+        if self.executor.lipsync_on and not config.lipsync_blender:
+            # Enable disable lipsync while in action
+            if config.lipsync_enabled:
+                self.executor.mux('lipsync_pau')
+            else:
+                self.executor.mux('head_pau')
         self.executor.lipsync_blender = config.lipsync_blender
         self.executor.enable_execute_marker(config.execute_marker)
         self.executor.tts_delay = config.tts_delay
@@ -183,6 +190,7 @@ class TTSExecutor(object):
         self.expr_topic = rospy.Publisher('make_face_expr', MakeFaceExpr, queue_size=0)
         self.vis_topic = rospy.Publisher('/blender_api/queue_viseme', Viseme, queue_size=0)
         self.mux = rospy.ServiceProxy('lips_pau_select', MuxSelect)
+        self.lipsync_on = False
         self.blink_publisher = rospy.Publisher('chatbot_blink',String,queue_size=1)
 
         self.animation_queue = Queue()
@@ -202,11 +210,14 @@ class TTSExecutor(object):
         if self.lipsync_enabled and not self.lipsync_blender:
             try:
                 self.mux("lipsync_pau")
+                self.lipsync_on = True
             except Exception as ex:
                 logger.error(ex)
 
     def _stopLipSync(self):
         self.speech_active.publish("stop")
+        self.lipsync_on = False
+
         if self.lipsync_enabled and not self.lipsync_blender:
             try:
                 self.mux("head_pau")

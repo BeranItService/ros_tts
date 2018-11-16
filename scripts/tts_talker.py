@@ -124,7 +124,7 @@ class TTSTalker:
         if self.executor.lipsync_on and not config.lipsync_blender:
             # Enable disable lipsync while in action
             if config.lipsync_enabled:
-                self.executor.mux('lips_pau')
+                self.executor.mux('lipsync_pau')
             else:
                 self.executor.mux('head_pau')
         self.executor.lipsync_blender = config.lipsync_blender

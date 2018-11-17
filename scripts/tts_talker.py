@@ -205,10 +205,10 @@ class TTSExecutor(object):
 
     def _startLipSync(self):
         self.speech_active.publish("start")
+        self.lipsync_on = True
         if self.lipsync_enabled and not self.lipsync_blender:
             try:
                 self.mux("lipsync_pau")
-                self.lipsync_on = True
             except Exception as ex:
                 logger.error(ex)
 

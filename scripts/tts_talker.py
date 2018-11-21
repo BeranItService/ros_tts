@@ -244,7 +244,9 @@ class TTSExecutor(object):
             os.remove(wavfile)
             return
 
-        threading.Timer(self.tts_delay, self.sound.play, (wavfile,)).start()
+        job = threading.Timer(self.tts_delay, self.sound.play, (wavfile,))
+        job.daemon = True
+        job.start()
 
         duration = response.get_duration()
         self._startLipSync()
@@ -318,6 +320,7 @@ class TTSExecutor(object):
             logger.info("Interrupt flag is cleared")
 
         self.sendVisime({'name': 'Sil'})
+        job.join()
         os.remove(wavfile)
 
     def sendVisime(self, visime):

@@ -66,6 +66,7 @@ class TTSTalker:
         if not self.enable:
             logger.warn("TTS is not enabled")
             return
+
         text = msg.text
         lang = msg.lang
         self._say(text, lang)
@@ -132,6 +133,7 @@ class TTSTalker:
         self.executor.lipsync_blender = config.lipsync_blender
         self.executor.enable_execute_marker(config.execute_marker)
         self.executor.tts_delay = config.tts_delay
+        self.executor.wait_for_tts_ready = config.wait_for_tts_ready
         self.tts_params_enabled = config.tts_params_enabled
         if self.tts_params_enabled:
             try:
@@ -178,8 +180,10 @@ class TTSExecutor(object):
     def __init__(self):
         self._locker = threading.RLock()
         self.interrupt = threading.Event()
+        self.tts_ready = threading.Event()
         self.sound = SoundFile()
         self.tts_delay = 0.1
+        self.wait_for_tts_ready = False
 
         self.lipsync_enabled = rospy.get_param('lipsync', True)
         self.lipsync_blender = rospy.get_param('lipsync_blender', True)
@@ -204,6 +208,9 @@ class TTSExecutor(object):
         if msg.data == 'shutup':
             logger.info("Shut up!!")
             self.interrupt.set()
+        if msg.data == 'ready':
+            logger.info("tts ready")
+            self.tts_ready.set()
 
     def _startLipSync(self):
         self.speech_active.publish("start")
@@ -236,6 +243,7 @@ class TTSExecutor(object):
 
     @_threadsafe
     def execute(self, response):
+        self.tts_ready.clear()
         self.interrupt.clear()
         _, wavfile = tempfile.mkstemp(prefix='tts')
         success = response.write(wavfile)
@@ -243,6 +251,10 @@ class TTSExecutor(object):
             logger.error("No sound file")
             os.remove(wavfile)
             return
+
+        if self.wait_for_tts_ready:
+            logger.info("Wait for TTS ready")
+            self.tts_ready.wait(2) # block max 2 seconds for tts "ready" message
 
         job = threading.Timer(self.tts_delay, self.sound.play, (wavfile,))
         job.daemon = True

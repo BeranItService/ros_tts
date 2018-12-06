@@ -252,6 +252,8 @@ class TTSExecutor(object):
             os.remove(wavfile)
             return
 
+        self._startLipSync()
+
         if self.wait_for_tts_ready:
             logger.info("Wait for TTS ready")
             self.tts_ready.wait(2) # block max 2 seconds for tts "ready" message
@@ -261,9 +263,7 @@ class TTSExecutor(object):
         job.start()
 
         duration = response.get_duration()
-        self._startLipSync()
         self.speech_active.publish("duration:%f" % duration)
-
         phonemes = response.response['phonemes']
         markers = response.response['markers']
         words = response.response['words']

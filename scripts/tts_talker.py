@@ -15,6 +15,7 @@ import xml.etree.ElementTree as ET
 import tempfile
 import json
 import traceback
+from collections import OrderedDict
 
 from dynamic_reconfigure.server import Server
 from hr_msgs.msg import MakeFaceExpr
@@ -40,11 +41,13 @@ class TTSTalker:
         self.tts_params = {}
         self.voices = rospy.get_param('voices', {})
         self.service = rospy.Service('tts_length', TTSLength, self.tts_length)
+        self.word_mappings = OrderedDict()
         tts_topic = rospy.get_param('tts_topic', 'chatbot_responses')
         rospy.Subscriber(tts_topic, TTS, self.say)
 
     def tts_length(self, req):
         text = req.txt
+        text = self.word_process(text)
         lang = req.lang
         try:
             if lang in self.voices.keys():
@@ -62,6 +65,15 @@ class TTSTalker:
             logger.error(ex)
         return TTSLengthResponse(1)
 
+    def word_process(self, text):
+        if self.word_mappings:
+            for k, v in self.word_mappings.iteritems():
+                orig = text
+                text = re.sub(r"""\b%s\b""" % k, v, text) # for better pronunciation
+                if text != orig:
+                    logger.warn("Replaced %s with %s", orig, text)
+        return text
+
     def say(self, msg):
         if not self.enable:
             logger.warn("TTS is not enabled")
@@ -69,6 +81,7 @@ class TTSTalker:
 
         text = msg.text
         lang = msg.lang
+        text = self.word_process(text)
         self._say(text, lang)
         logger.info("Finished tts")
 
@@ -133,6 +146,21 @@ class TTSTalker:
         self.executor.lipsync_blender = config.lipsync_blender
         self.executor.enable_execute_marker(config.execute_marker)
         self.executor.tts_delay = config.tts_delay
+        try:
+            word_mappings = OrderedDict()
+            for field in config.word_mappings.split(','):
+                if not field.strip(): continue
+                k, v = field.split('=')
+                k = k.strip()
+                v = v.strip()
+                if k and v:
+                    word_mappings[k] = v
+            self.word_mappings = word_mappings
+            logger.warn("Set word mapping %s", self.word_mappings)
+        except Exception as ex:
+            logger.error("Set word mapping error %s", ex)
+            config.word_mappings = ''
+            self.word_mappings = OrderedDict()
         self.executor.wait_for_tts_ready = config.wait_for_tts_ready
         self.tts_params_enabled = config.tts_params_enabled
         if self.tts_params_enabled:

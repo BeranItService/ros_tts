@@ -42,7 +42,7 @@ class TTSTalker:
         self.voices = rospy.get_param('voices', {})
         self.service = rospy.Service('tts_length', TTSLength, self.tts_length)
         self.word_mappings = OrderedDict()
-        tts_topic = rospy.get_param('tts_topic', 'chatbot_responses')
+        tts_topic = rospy.get_param('tts_topic', 'chatbot_tts')
         rospy.Subscriber(tts_topic, TTS, self.say)
 
     def tts_length(self, req):

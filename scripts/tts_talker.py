@@ -332,7 +332,7 @@ class TTSExecutor(object):
             logger.info("Interrupt flag is cleared")
 
         self.sendVisime({'name': 'Sil'})
-        job.join()
+        job.join(timeout=duration)
         os.remove(wavfile)
 
     def sendVisime(self, visime):

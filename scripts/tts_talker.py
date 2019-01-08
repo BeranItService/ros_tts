@@ -14,6 +14,7 @@ from Queue import Queue
 import xml.etree.ElementTree as ET
 import tempfile
 import json
+import jsonpickle
 import traceback
 
 from dynamic_reconfigure.server import Server
@@ -23,8 +24,9 @@ from hr_msgs.msg import Viseme, SetGesture, EmotionState
 from ros_tts.cfg import TTSConfig
 from ros_tts.srv import *
 from std_msgs.msg import String
+from rospy_message_converter import message_converter
 from topic_tools.srv import MuxSelect
-from ttsserver.client import Client
+from ttsserver.client import Client, TTSResponse
 from ttsserver.espp.emotivespeech import DEFAULT_PARAMS, PRESET_EMO_PARAMS
 from ttsserver.sound_file import SoundFile
 from ttsserver.visemes import BaseVisemes
@@ -42,6 +44,13 @@ class TTSTalker:
         self.service = rospy.Service('tts_length', TTSLength, self.tts_length)
         tts_topic = rospy.get_param('tts_topic', 'chatbot_tts')
         rospy.Subscriber(tts_topic, TTS, self.say)
+        rospy.Subscriber('/tts_response', String, self.tts_response)
+
+    def tts_response(self, msg):
+        """TTS response in string"""
+        response = message_converter.convert_ros_message_to_dictionary(msg)
+        response = jsonpickle.decode(response['data'])
+        self.executor.execute(response, False)
 
     def tts_length(self, req):
         text = req.txt
@@ -242,15 +251,16 @@ class TTSExecutor(object):
         return wrap
 
     @_threadsafe
-    def execute(self, response):
+    def execute(self, response, play_audio=True):
         self.tts_ready.clear()
         self.interrupt.clear()
-        _, wavfile = tempfile.mkstemp(prefix='tts')
-        success = response.write(wavfile)
-        if not success:
-            logger.error("No sound file")
-            os.remove(wavfile)
-            return
+        if play_audio:
+            _, wavfile = tempfile.mkstemp(prefix='tts')
+            success = response.write(wavfile)
+            if not success:
+                logger.error("No sound file")
+                os.remove(wavfile)
+                return
 
         self._startLipSync()
 
@@ -258,9 +268,10 @@ class TTSExecutor(object):
             logger.info("Wait for TTS ready")
             self.tts_ready.wait(2) # block max 2 seconds for tts "ready" message
 
-        job = threading.Timer(self.tts_delay, self.sound.play, (wavfile,))
-        job.daemon = True
-        job.start()
+        if play_audio:
+            job = threading.Timer(self.tts_delay, self.sound.play, (wavfile,))
+            job.daemon = True
+            job.start()
 
         duration = response.get_duration()
         self.speech_active.publish("duration:%f" % duration)
@@ -332,8 +343,10 @@ class TTSExecutor(object):
             logger.info("Interrupt flag is cleared")
 
         self.sendVisime({'name': 'Sil'})
-        job.join(timeout=duration)
-        os.remove(wavfile)
+
+        if play_audio:
+            job.join(timeout=duration)
+            os.remove(wavfile)
 
     def sendVisime(self, visime):
         if self.lipsync_enabled and self.lipsync_blender and (visime['name'] != 'Sil'):

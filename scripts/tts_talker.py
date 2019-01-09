@@ -199,6 +199,7 @@ class TTSExecutor(object):
 
         tts_control = rospy.get_param('tts_control', 'tts_control')
         rospy.Subscriber(tts_control, String, self.tts_control)
+        rospy.Subscriber('/tts_control', String, self.tts_control) # also can use absolute name for convenience
         self.speech_active = rospy.Publisher('speech_events', String, queue_size=10)
         self.expr_topic = rospy.Publisher('make_face_expr', MakeFaceExpr, queue_size=0)
         self.vis_topic = rospy.Publisher('/blender_api/queue_viseme', Viseme, queue_size=0)

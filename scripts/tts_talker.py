@@ -434,14 +434,14 @@ class AnimationRunner(threading.Thread):
         msg = SetGesture()
         args = gesture['name'].split(',', 2)
         logger.info(args)
-        msg.speed = 1
         msg.magnitude = 1
+        msg.speed = 1
         if len(args) >= 1:
             msg.name = str(args[0])
         if len(args) >= 2:
-            msg.speed = float(args[1])
+            msg.magnitude = float(args[1])
         if len(args) >= 3:
-            msg.magnitude = float(args[2])
+            msg.speed = float(args[2])
         logger.info("Send gesture {}".format(msg))
         self.gesture_topic.publish(msg)
 

@@ -399,19 +399,18 @@ class AnimationRunner(threading.Thread):
                 name = node['name']
                 if isinstance(name, unicode):
                     name = name.encode('utf8')
+                arg = ''
                 if ',' in name:
                     name, arg = name.split(',', 1)
-                else:
-                    arg = ''
                 if name in self.tts_animation_config:
                     animation_type, animation_name = self.tts_animation_config[name].split(':')
-                    if arg:
-                        animation_name = ','.join([animation_name, arg])
                 elif name.startswith('emotion:') or name.startswith('gesture:'):
                     animation_type, animation_name = name.split(':')
                 else:
                     logger.error("{} is not configured".format(name))
                     continue
+                if arg:
+                    animation_name = ','.join([animation_name, arg])
                 if animation_type == 'gesture':
                     node['animation'] = animation_name
                     gesture = self.get_gesture(node)

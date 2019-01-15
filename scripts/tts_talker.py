@@ -417,7 +417,6 @@ class AnimationRunner(threading.Thread):
                     self.sendGesture(gesture)
                 elif animation_type == 'emotion':
                     node['animation'] = animation_name
-                    logger.error(node)
                     emotion = self.get_emotion(node)
                     self.sendEmotion(emotion)
                 else:
@@ -428,8 +427,6 @@ class AnimationRunner(threading.Thread):
 
     def get_gesture(self, node):
         gesture = {}
-        gesture['start'] = node['start']
-        gesture['end'] = node['end']
         gesture['name'] = node['animation'].strip(',')
         return gesture
 
@@ -451,8 +448,6 @@ class AnimationRunner(threading.Thread):
     def get_emotion(self, node):
         emotion = {}
         emotion['name'] = node['animation'].strip(',')
-        emotion['start'] = node['start']
-        emotion['end'] = node['end']
         return emotion
 
     def sendEmotion(self, emotion):
@@ -460,7 +455,7 @@ class AnimationRunner(threading.Thread):
         args = emotion['name'].split(',', 2)
         logger.info(args)
         msg.magnitude = 1
-        msg.duration.secs = 1
+        msg.duration.secs = 2
         if len(args) >= 1:
             msg.name = str(args[0])
         if len(args) >= 2:

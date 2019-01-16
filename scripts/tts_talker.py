@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# Copyright (c) 2013-2019 Hanson Robotics, Ltd. 
 
 import os
 import sys

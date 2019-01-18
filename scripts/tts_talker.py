@@ -31,6 +31,7 @@ from ttsserver.sound_file import SoundFile
 from ttsserver.visemes import BaseVisemes
 
 logger = logging.getLogger('hr.tts.tts_talker')
+report_logger = logging.getLogger('hr.tts.tts_talker.report')
 
 class TTSTalker:
     def __init__(self):
@@ -118,7 +119,7 @@ class TTSTalker:
                 'tts_input': text,
                 'tts_text': notags
             }
-            logger.warn('Say"{}" in {}'.format(notags, lang), extra={'data': log_data})
+            report_logger.warn('Say"{}" in {}'.format(notags, lang), extra={'data': log_data})
 
 
     def reconfig(self, config, level):

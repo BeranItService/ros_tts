@@ -5,6 +5,11 @@ This ROS node provides lip-synced, gesture-appropriate animation for
 text-to-speech for the Sophia robot, including blinking gestures and 
 an appropriately-timed viseme stream to match.
 
+The long-term plan is to replace this with a super-duper "Animation
+Orchestrator" that will coordinate all animation, and not just audio.
+The current implementation here is quitte minimal, just enough to get
+the basic job done.
+
 ## Dependencies
 To use this, you need:
 * [ttsserver](https://github.com/hansonrobotics/ttsserver), a multi-TTS

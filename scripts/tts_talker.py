@@ -333,12 +333,12 @@ class TTSExecutor(object):
             self.sound.interrupt()
             logger.info("Interrupt flag is cleared")
 
-        self.sendVisime({'name': 'Sil'})
+        self.sendVisime({'name': 'Sil', 'duration': 0.3})
         job.join(timeout=duration)
         os.remove(wavfile)
 
     def sendVisime(self, visime):
-        if self.lipsync_enabled and self.lipsync_blender and (visime['name'] != 'Sil'):
+        if self.lipsync_enabled and self.lipsync_blender:
             #Need to have global shapekey_store class.
             msg = Viseme()
             # Duration should be overlapping
@@ -348,6 +348,7 @@ class TTSExecutor(object):
             msg.magnitude = BaseVisemes.visemes_param[visime['name']]['magnitude']
             msg.rampin = BaseVisemes.visemes_param[visime['name']]['rampin']
             msg.rampout = BaseVisemes.visemes_param[visime['name']]['rampout']
+            logger.debug('Sending viseme %s', msg.name)
             try:
                 self.vis_topic.publish(msg)
             except Exception as ex:
